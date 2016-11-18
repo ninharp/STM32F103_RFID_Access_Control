@@ -5,9 +5,6 @@
  *      Author: Michael Sauer <sauer.uetersen@gmail.com>
  */
 
-#ifndef LIB_KEYMATRIX_C_
-#define LIB_KEYMATRIX_C_
-
 /* Includes ------------------------------------------------------------------*/
 #include "keymatrix.h"
 /* Private typedef -----------------------------------------------------------*/
@@ -18,7 +15,6 @@ uint8_t columns;
 uint8_t rows;
 /* Private function prototypes -----------------------------------------------*/
 
-#endif /* LIB_KEYMATRIX_C_ */
 
 
 

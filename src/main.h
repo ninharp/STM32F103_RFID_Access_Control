@@ -21,6 +21,7 @@
 #ifdef KEY_TOUCH_TTP229
 #include "ttp229.h" // TTP229 Touch Controller Library
 #endif
+#include "feedback.h" // feedback routines
 #include "general.h" // general includes and defines
 
 void Delay(vu32 nCount);

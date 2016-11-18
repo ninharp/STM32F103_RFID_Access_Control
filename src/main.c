@@ -1,9 +1,10 @@
 /*
- * @version 0.1.2
+ * @version 0.1.38
  */
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f10x.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -12,7 +13,9 @@
 static uint8_t ver_maj = VER_MAJOR;
 static uint8_t ver_min = VER_MINOR;
 static uint16_t ver_build = VER_BUILD;
+/* Timer Variables */
 static __IO uint32_t TimingDelay_ms;
+
 /* Private function prototypes -----------------------------------------------*/
 void IO_Init(void);
 void RCC_Configuration(void);
@@ -46,8 +49,19 @@ int main(void)
 	/* Data Watch init */
 	DWT_Init();
 
-	/* Init TTP229 */
+	/* Feedback routines init */
+	Feedback_Init();
+
+	LedOn(LED_RED);
+	LedOn(LED_GREEN);
+	Beep();
+
+	DelayMS(1500);
+	LedOff(LED_RED);
+	BeepBeep();
+
 #ifdef KEY_TOUCH_TTP229
+	/* Init TTP229 */
 #if (KEY_TOUCH_TTP229 == 0)
 	TTP229_Init(KEYS_16_ACTIVE_LOW);
 #elif (KEY_TOUCH_TTP229 == 1)
