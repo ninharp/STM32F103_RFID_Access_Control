@@ -1,5 +1,7 @@
 # RFID MFRC522 Access Control #
 
+![Project](https://github.com/ninharp/STM32F103_RFID_Access_Control/blob/master/doc/images/project.jpg?raw=true)
+
 ## Goal ##
 
 Made a simple and easy to use solution for door entry systems (or maybe other purposes) with rfid tag combined with keypad.
