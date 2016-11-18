@@ -14,3 +14,20 @@ I build all hardware in a Hammond enclosure with the ability to position it next
 * A beeper for simple sound feedback
 * Two LEDs for visual feedback
 
+### Pictures from assembling ###
+
+![doc/images/photo0.jpg](Enclosure)
+![doc/images/photo0.jpg](Photo1)
+![doc/images/photo0.jpg](Photo2)
+![doc/images/photo0.jpg](Photo3)
+![doc/images/photo0.jpg](Photo4)
+![doc/images/photo0.jpg](Photo5)
+![doc/images/photo0.jpg](Photo6)
+![doc/images/photo0.jpg](Photo7)
+![doc/images/photo0.jpg](Photo8)
+![doc/images/photo0.jpg](Photo9)
+![doc/images/photo0.jpg](Photo10)
+![doc/images/photo0.jpg](Photo11)
+![doc/images/photo0.jpg](Photo12)
+![doc/images/photo0.jpg](Photo13)
+![doc/images/photo0.jpg](Photo14)
