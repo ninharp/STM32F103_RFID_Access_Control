@@ -1,5 +1,5 @@
 /*
- * @version 0.1.89
+ * @version 0.1.171
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -66,6 +66,18 @@ int main(void)
 	LedOff(LED_GREEN);
 	BeepBeep();
 
+	//Recognized card ID
+	uint8_t CardID[5];
+	//My cards id
+	//I read them with program below, and write this here
+	uint8_t MyID[5] = {
+		0x43, 0xdc, 0x52, 0xb6, 0x7b    //My card on my keys
+	};
+	char buffer[50];
+
+	/* RFC522 RFID Reader init */
+	TM_MFRC522_Init();
+
 #ifdef KEY_TOUCH_TTP229
 	/* Init TTP229 */
 #if (KEY_TOUCH_TTP229 == 0)
@@ -79,7 +91,8 @@ int main(void)
 #endif
 #endif
 
-	//unsigned long timerUpdate = millis();
+	unsigned long timerUpdate = millis();
+	unsigned long timerDebounce = millis();
 
 	Delay(600000);
 	printf("boot io! v%d.%d.%d\r\n\n", ver_maj, ver_min, ver_build);
@@ -93,8 +106,22 @@ int main(void)
 		/* Read keyboard data */
 		Keypad_Button = TM_KEYPAD_Read();
 
+		//If any card detected
+		if (TM_MFRC522_Check(CardID) == MI_OK) {
+			//CardID is valid
+			printf("Tag found!\r\n");
+			for (int i = 0; i < 4; i++)
+				printf("0x%02x ", CardID[i]);
+			printf("\r\n");
+
+			//Check if this is my card
+			if (TM_MFRC522_Compare(CardID, MyID) == MI_OK) {
+				printf("Toll\r\n");
+			}
+		}
+
 		/* Keypad was pressed */
-		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED) {/* Keypad is pressed */
+		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 500)) {/* Keypad is pressed */
 			KeyFeedback();
 			switch (Keypad_Button) {
 				case TM_KEYPAD_Button_0:        /* Button 0 pressed */
@@ -108,15 +135,12 @@ int main(void)
 					break;
 				case TM_KEYPAD_Button_3:        /* Button 3 pressed */
 					printf("Button 3\r\n");
-					LedOff(LED_GREEN);
 					break;
 				case TM_KEYPAD_Button_4:        /* Button 4 pressed */
 					printf("Button 4\r\n");
-					LedOn(LED_GREEN);
 					break;
 				case TM_KEYPAD_Button_5:        /* Button 5 pressed */
 					printf("Button 5\r\n");
-					LedOff(LED_RED);
 					break;
 				case TM_KEYPAD_Button_6:        /* Button 6 pressed */
 					printf("Button 6\r\n");
@@ -164,7 +188,9 @@ int main(void)
 				default:
 					break;
 			}
-			DelayMS(200);
+			Keypad_Button = TM_KEYPAD_Button_NOPRESSED;
+			//DelayMS(250);
+			timerDebounce = millis();
 		}
 
 		/* Send to user */
