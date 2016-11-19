@@ -68,6 +68,9 @@ resonating body
 ![Photo13](https://github.com/ninharp/STM32F103_RFID_Access_Control/blob/master/doc/images/photo13.jpg?raw=true)
 These small plastic servo i use for testing purposes in this project
 
+![rfid_reader_signal](https://github.com/ninharp/STM32F103_RFID_Access_Control/blob/master/doc/images/rfid_reader_signal.jpg?raw=true)
+Sample Signal from RFID Reader SPI communication
+
 ### License ###
 
 This procject is released under the GNU General Public License, you find a copy of the whole license
