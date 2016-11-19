@@ -1,0 +1,5 @@
+* Add doxyfile for doxygen documentation generator
+* Add on all files, doxygen specific tags, just before it starts to grow :)
+* Fix MFRC522 library to work correctly
+* Fix Keypad Matrix library to use usable debouncing
+* Speed up auto versioning
