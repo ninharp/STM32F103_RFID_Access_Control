@@ -25,9 +25,11 @@
 /* Exported macro -------------------------------------------------------------*/
 #define LedOn(pin) Feedback_Led(pin, true);
 #define LedOff(pin) Feedback_Led(pin, false);
+#define LedKey() Feedback_Led(LED_RED, true); DWT_Delay_ms(50); Feedback_Led(LED_RED, false);
 #define Beep() Feedback_Beep(150);
 #define BeepKey() Feedback_Beep(90);
 #define BeepBeep() Beep(); DWT_Delay_ms(100); Beep();
+#define KeyFeedback() Feedback_Led(LED_RED, true); Feedback_Beep(90); Feedback_Led(LED_RED, false);
 /* Exported variables ---------------------------------------------------------*/
 /*
  * List of all Pins for the feedbacks

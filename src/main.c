@@ -1,5 +1,5 @@
 /*
- * @version 0.1.38
+ * @version 0.1.89
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -27,6 +27,8 @@ void printClocks(void);
 int main(void)
 {
 	NVIC_InitTypeDef NVIC_InitStructure;
+	/* Create keypad instance */
+	TM_KEYPAD_Button_t Keypad_Button;
 
 	SystemInit();
 
@@ -37,8 +39,8 @@ int main(void)
 	NVIC_Configuration();
 
 	/* SysTick init */
-	SysTick_Config((SystemCoreClock / 1000));
 	SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK);
+	SysTick_Config((SystemCoreClock / 1000));
 
 	/* GPIO init */
 	IO_Init();
@@ -52,12 +54,16 @@ int main(void)
 	/* Feedback routines init */
 	Feedback_Init();
 
+	/* KeyMatrix init */
+	TM_KEYPAD_Init();
+
 	LedOn(LED_RED);
 	LedOn(LED_GREEN);
 	Beep();
 
 	DelayMS(1500);
 	LedOff(LED_RED);
+	LedOff(LED_GREEN);
 	BeepBeep();
 
 #ifdef KEY_TOUCH_TTP229
@@ -84,6 +90,86 @@ int main(void)
 	/* Main Loop */
 	while (1)
 	{
+		/* Read keyboard data */
+		Keypad_Button = TM_KEYPAD_Read();
+
+		/* Keypad was pressed */
+		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED) {/* Keypad is pressed */
+			KeyFeedback();
+			switch (Keypad_Button) {
+				case TM_KEYPAD_Button_0:        /* Button 0 pressed */
+					printf("Button 0\r\n");
+					break;
+				case TM_KEYPAD_Button_1:        /* Button 1 pressed */
+					printf("Button 1\r\n");
+					break;
+				case TM_KEYPAD_Button_2:        /* Button 2 pressed */
+					printf("Button 2\r\n");
+					break;
+				case TM_KEYPAD_Button_3:        /* Button 3 pressed */
+					printf("Button 3\r\n");
+					LedOff(LED_GREEN);
+					break;
+				case TM_KEYPAD_Button_4:        /* Button 4 pressed */
+					printf("Button 4\r\n");
+					LedOn(LED_GREEN);
+					break;
+				case TM_KEYPAD_Button_5:        /* Button 5 pressed */
+					printf("Button 5\r\n");
+					LedOff(LED_RED);
+					break;
+				case TM_KEYPAD_Button_6:        /* Button 6 pressed */
+					printf("Button 6\r\n");
+					LedOn(LED_RED);
+					break;
+				case TM_KEYPAD_Button_7:        /* Button 7 pressed */
+					printf("Button 7\r\n");
+					break;
+				case TM_KEYPAD_Button_8:        /* Button 8 pressed */
+					printf("Button 8\r\n");
+					break;
+				case TM_KEYPAD_Button_9:        /* Button 9 pressed */
+					printf("Button 9\r\n");
+					break;
+				case TM_KEYPAD_Button_STAR:        /* Button STAR pressed */
+					printf("Button *\r\n");
+					break;
+				case TM_KEYPAD_Button_HASH:        /* Button HASH pressed */
+					printf("Button #\r\n");
+					break;
+				case TM_KEYPAD_Button_LEFT:        /* Button Left pressed */
+					printf("Button <\r\n");
+					break;
+				case TM_KEYPAD_Button_RIGHT:        /* Button Right pressed */
+					printf("Button >\r\n");
+					break;
+				case TM_KEYPAD_Button_UP:        /* Button Up pressed */
+					printf("Button /\\\r\n");
+					break;
+				case TM_KEYPAD_Button_DOWN:        /* Button Down pressed */
+					printf("Button \\/\r\n");
+					break;
+				case TM_KEYPAD_Button_F1:        /* Button F1 pressed */
+					printf("Button F1\r\n");
+					break;
+				case TM_KEYPAD_Button_F2:        /* Button F2 pressed */
+					printf("Button F2\r\n");
+					break;
+				case TM_KEYPAD_Button_ESC:        /* Button scape pressed */
+					printf("Button Escape\r\n");
+					break;
+				case TM_KEYPAD_Button_ENT:        /* Button Enter pressed */
+					printf("Button Enter\r\n");
+					break;
+				default:
+					break;
+			}
+			DelayMS(200);
+		}
+
+		/* Send to user */
+		//printf("Pressed: %u us\n", (uint8_t)Keypad_Button);
+
 		/*
 		TTP229_KEY key = TTP229_GetKey();
 		if (key != KEY_NONE) {
@@ -248,6 +334,8 @@ void TimingDelay_Increment(void)
 void SysTick_Handler(void)
 {
 	TimingDelay_Increment();
+	/* Process keypad */
+	TM_KEYPAD_Update();
 }
 
 #ifdef DEBUG
