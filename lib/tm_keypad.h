@@ -155,21 +155,21 @@ R4			PC5				Row 4
 /* Columns */
 /* Column 1 default */
 #ifndef KEYPAD_COLUMN_1_PIN
-#define KEYPAD_COLUMN_1_PORT		GPIOB
-#define KEYPAD_COLUMN_1_PIN			GPIO_Pin_13
-#define KEYPAD_COLUMN_1_CLK			RCC_APB2Periph_GPIOB
+#define KEYPAD_COLUMN_1_PORT		GPIOC
+#define KEYPAD_COLUMN_1_PIN			GPIO_Pin_4
+#define KEYPAD_COLUMN_1_CLK			RCC_APB2Periph_GPIOC
 #endif
 /* Column 2 default */
 #ifndef KEYPAD_COLUMN_2_PIN
 #define KEYPAD_COLUMN_2_PORT		GPIOB
-#define KEYPAD_COLUMN_2_PIN			GPIO_Pin_14
+#define KEYPAD_COLUMN_2_PIN			GPIO_Pin_6
 #define KEYPAD_COLUMN_2_CLK			RCC_APB2Periph_GPIOB
 #endif
 /* Column 3 default */
 #ifndef KEYPAD_COLUMN_3_PIN
-#define KEYPAD_COLUMN_3_PORT		GPIOB
-#define KEYPAD_COLUMN_3_PIN			GPIO_Pin_15
-#define KEYPAD_COLUMN_3_CLK			RCC_APB2Periph_GPIOB
+#define KEYPAD_COLUMN_3_PORT		GPIOA
+#define KEYPAD_COLUMN_3_PIN			GPIO_Pin_8
+#define KEYPAD_COLUMN_3_CLK			RCC_APB2Periph_GPIOA
 #endif
 /* Column 4 default */
 #ifndef KEYPAD_COLUMN_4_PIN
@@ -180,7 +180,7 @@ R4			PC5				Row 4
 
 /* Number of milliseconds between 2 reads */
 #ifndef KEYPAD_READ_INTERVAL
-#define KEYPAD_READ_INTERVAL        100
+#define KEYPAD_READ_INTERVAL        150
 #endif
 
 /* Keypad no pressed */
