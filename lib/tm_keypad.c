@@ -76,7 +76,7 @@ void TM_KEYPAD_Init(void) {
 	RCC_APB2PeriphClockCmd(KEYPAD_COLUMN_1_CLK, ENABLE);
 	
 	/* Rows are inputs */
-	GPIO_InitStructure.GPIO_Mode = (GPIO_Mode_IPU | GPIO_Mode_AIN);
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 	/* Row 1 */
 	GPIO_InitStructure.GPIO_Pin = KEYPAD_ROW_1_PIN;
 	GPIO_Init(KEYPAD_ROW_1_PORT, &GPIO_InitStructure);

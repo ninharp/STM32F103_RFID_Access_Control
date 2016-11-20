@@ -95,7 +95,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="StdPeriph" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
+						<entry excluding="lib/tm_mfrc522.c|StdPeriph" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
 						<entry excluding="stm32f10x_flash.c|stm32f10x_bkp.c|stm32f10x_can.c|stm32f10x_cec.c|stm32f10x_crc.c|stm32f10x_dac.c|stm32f10x_dbgmcu.c|stm32f10x_fsmc.c|stm32f10x_rtc.c|stm32f10x_sdio.c" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name="StdPeriph"/>
 					</sourceEntries>
 				</configuration>
@@ -200,7 +200,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="StdPeriph/stm32f10x_flash.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="lib/tm_mfrc522.c|StdPeriph/stm32f10x_flash.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

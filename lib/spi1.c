@@ -69,22 +69,7 @@ void _SPI1_Init_IO(void)
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
-Status SPI1_Read(uint8_t *buf,uint32_t nbyte)
-{
-  __IO uint32_t Timeout = 0;
-
-  if (!nbyte)
-    return Success;
-
-  return Success;
-
-errReturn:
-  // Any cleanup here
-  return Error;
-
-}
-
-__INLINE uint8_t SPI1_Write(const uint8_t buf)
+uint8_t SPI1_Read(const uint8_t buf)
 {
 	/* Transfer procedure */
 	/* Wait for SPIy Tx buffer empty */
@@ -92,7 +77,18 @@ __INLINE uint8_t SPI1_Write(const uint8_t buf)
 	/* Send SPI1 data */
 	SPI_I2S_SendData(SPI1, buf);
 	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
-	return SPI1->DR;
+		return SPI1->DR;
+}
+
+uint8_t SPI1_Write(const uint8_t buf)
+{
+	/* Transfer procedure */
+	/* Wait for SPIy Tx buffer empty */
+	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
+	/* Send SPI1 data */
+	SPI_I2S_SendData(SPI1, buf);
+	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
+		return SPI1->DR;
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * @version 0.1.171
+ * @version 0.1.244
  */
 
 /* Includes ------------------------------------------------------------------*/
@@ -15,6 +15,14 @@ static uint8_t ver_min = VER_MINOR;
 static uint16_t ver_build = VER_BUILD;
 /* Timer Variables */
 static __IO uint32_t TimingDelay_ms;
+
+/* MFRC522 Variables */
+MIFARE_Key key;
+int block=2;//this is the block number we will write into and then read. Do not write into 'sector trailer' block, since this can make the block unusable.
+
+byte blockcontent[16] = {"ninharp_________"}; // an array with 16 bytes to be written into one of the 64 card blocks is defined
+//byte blockcontent[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //all zeros. This can be used to delete a block.
+byte readbackblock[18]; // This array is used for reading out a block. The MIFARE_Read method requires a buffer that is at least 18 bytes to hold the 16 bytes of a block.
 
 /* Private function prototypes -----------------------------------------------*/
 void IO_Init(void);
@@ -61,22 +69,25 @@ int main(void)
 	LedOn(LED_GREEN);
 	Beep();
 
-	DelayMS(1500);
+	DelayMS(1000);
 	LedOff(LED_RED);
 	LedOff(LED_GREEN);
 	BeepBeep();
 
-	//Recognized card ID
-	uint8_t CardID[5];
-	//My cards id
-	//I read them with program below, and write this here
-	uint8_t MyID[5] = {
-		0x43, 0xdc, 0x52, 0xb6, 0x7b    //My card on my keys
-	};
-	char buffer[50];
+	/* Init MFRC522 Reader */
+	PCD_Init();
 
-	/* RFC522 RFID Reader init */
-	TM_MFRC522_Init();
+	// Prepare the security key for the read and write functions - all six key bytes are set to 0xFF at chip delivery from the factory.
+	// Since the cards in the kit are new and the keys were never defined, they are 0xFF
+	// if we had a card that was programmed by someone else, we would need to know the key to be able to access it. This key would then need to be stored in 'key' instead.
+
+	for (byte i = 0; i < 6; i++) {
+			key.keyByte[i] = 0xFF;//keyByte is defined in the "MIFARE_Key" 'struct' definition in the .h file of the library
+	}
+	printf("Scan a MIFARE Classic card\r\n");
+
+	/* TM_RFC522 RFID Reader init */
+	//TM_MFRC522_Init();
 
 #ifdef KEY_TOUCH_TTP229
 	/* Init TTP229 */
@@ -94,19 +105,63 @@ int main(void)
 	unsigned long timerUpdate = millis();
 	unsigned long timerDebounce = millis();
 
-	Delay(600000);
-	printf("boot io! v%d.%d.%d\r\n\n", ver_maj, ver_min, ver_build);
+	//Delay(600000);
+	//printf("boot io! v%d.%d.%d\r\n\n", ver_maj, ver_min, ver_build);
 #ifdef DEBUG
-	printClocks();
+	//printClocks();
 #endif
 
 	/* Main Loop */
 	while (1)
 	{
+		/*****************************************establishing contact with a tag/card**********************************************************************/
+
+		// Look for new cards (in case you wonder what PICC means: proximity integrated circuit card)
+		if (PICC_IsNewCardPresent() == 1) {//if PICC_IsNewCardPresent returns 1, a new card has been found and we continue
+			printf("card found\r\n");
+			// Select one of the cards
+			if (PICC_ReadCardSerial()) {//if PICC_ReadCardSerial returns 1, the "uid" struct (see h lines 238-45)) contains the ID of the read card.
+				// Among other things, the PICC_ReadCardSerial() method reads the UID and the SAK (Select acknowledge) into the uid struct, which is also instantiated
+				// during this process.
+				// The UID is needed during the authentication process
+					//The Uid struct:
+					//typedef struct {
+				//byte		size;			// Number of bytes in the UID. 4, 7 or 10.
+				//byte		uidByte[10];            //the user ID in 10 bytes.
+				//byte		sak;			// The SAK (Select acknowledge) byte returned from the PICC after successful selection.
+					//} Uid;
+
+				 printf("card selected\r\n");
+
+				 /*****************************************writing and reading a block on the card**********************************************************************/
+
+				 writeBlock(block, blockcontent);//the blockcontent array is written into the card block
+				 PICC_DumpToSerial(&(uid));
+
+				 //The 'PICC_DumpToSerial' method 'dumps' the entire MIFARE data block into the serial monitor. Very useful while programming a sketch with the RFID reader...
+				 //Notes:
+				 //(1) MIFARE cards conceal key A in all trailer blocks, and shows 0x00 instead of 0xFF. This is a secutiry feature. Key B appears to be public by default.
+				 //(2) The card needs to be on the reader for the entire duration of the dump. If it is removed prematurely, the dump interrupts and an error message will appear.
+				 //(3) The dump takes longer than the time alloted for interaction per pairing between reader and card, i.e. the readBlock function below will produce a timeout if
+				 //    the dump is used.
+
+				 //PICC_DumpToSerial(&(uid));//uncomment this if you want to see the entire 1k memory with the block written into it.
+
+				 readBlock(block, readbackblock);//read the block back
+				 printf("read block: ");
+				 for (int j=0 ; j<16 ; j++)//print the block contents
+				 {
+					 printf("%c", readbackblock[j]); // transmits the ASCII numbers as human readable characters to serial monitor
+				 }
+				 printf("\r\n");
+			}
+		}
+
 		/* Read keyboard data */
 		Keypad_Button = TM_KEYPAD_Read();
 
 		//If any card detected
+		/*
 		if (TM_MFRC522_Check(CardID) == MI_OK) {
 			//CardID is valid
 			printf("Tag found!\r\n");
@@ -119,6 +174,7 @@ int main(void)
 				printf("Toll\r\n");
 			}
 		}
+		*/
 
 		/* Keypad was pressed */
 		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 500)) {/* Keypad is pressed */
@@ -203,6 +259,7 @@ int main(void)
 		}
 		DWT_Delay_ms(100); // Simplest Debouncing
 		*/
+
 	}
 }
 
@@ -302,6 +359,78 @@ void NVIC_Configuration(void)
 	/* Set the Vector Table base location at 0x08000000 */
 	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x0);
 #endif
+}
+
+int writeBlock(int blockNumber, byte arrayAddress[])
+{
+  //this makes sure that we only write into data blocks. Every 4th block is a trailer block for the access/security info.
+  int largestModulo4Number=blockNumber/4*4;
+  int trailerBlock=largestModulo4Number+3;//determine trailer block for the sector
+  if (blockNumber > 2 && (blockNumber+1)%4 == 0){
+	  printf("%d is a trailer block:", blockNumber);
+	  return 2;
+  }//block number is a trailer block (modulo 4); quit and send error code 2
+  printf("%d is a data block:", blockNumber);
+
+  /*****************************************authentication of the desired block for access***********************************************************/
+  byte status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(uid));
+  //byte PCD_Authenticate(byte command, byte blockAddr, MIFARE_Key *key, Uid *uid);
+  //this method is used to authenticate a certain block for writing or reading
+  //command: See enumerations above -> PICC_CMD_MF_AUTH_KEY_A	= 0x60 (=1100000),		// this command performs authentication with Key A
+  //blockAddr is the number of the block from 0 to 15.
+  //MIFARE_Key *key is a pointer to the MIFARE_Key struct defined above, this struct needs to be defined for each block. New cards have all A/B= FF FF FF FF FF FF
+  //Uid *uid is a pointer to the UID struct that contains the user ID of the card.
+  if (status != STATUS_OK) {
+         printf("PCD_Authenticate() failed: %s\r\n", GetStatusCodeName(status));
+         return 3;//return "3" as error message
+  }
+  //it appears the authentication needs to be made before every block read/write within a specific sector.
+  //If a different sector is being authenticated access to the previous one is lost.
+
+
+  /*****************************************writing the block***********************************************************/
+
+  status = MIFARE_Write(blockNumber, arrayAddress, 16);//valueBlockA is the block number, MIFARE_Write(block number (0-15), byte array containing 16 values, number of bytes in block (=16))
+  //status = mfrc522.MIFARE_Write(9, value1Block, 16);
+  if (status != STATUS_OK) {
+           printf("MIFARE_Write() failed: %s\r\n", GetStatusCodeName(status));
+           return 4;//return "4" as error message
+  }
+  printf("block was written\r\n");
+}
+
+
+int readBlock(int blockNumber, byte arrayAddress[])
+{
+  int largestModulo4Number=blockNumber/4*4;
+  int trailerBlock=largestModulo4Number+3;//determine trailer block for the sector
+
+  /*****************************************authentication of the desired block for access***********************************************************/
+  byte status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(uid));
+  //byte PCD_Authenticate(byte command, byte blockAddr, MIFARE_Key *key, Uid *uid);
+  //this method is used to authenticate a certain block for writing or reading
+  //command: See enumerations above -> PICC_CMD_MF_AUTH_KEY_A	= 0x60 (=1100000),		// this command performs authentication with Key A
+  //blockAddr is the number of the block from 0 to 15.
+  //MIFARE_Key *key is a pointer to the MIFARE_Key struct defined above, this struct needs to be defined for each block. New cards have all A/B= FF FF FF FF FF FF
+  //Uid *uid is a pointer to the UID struct that contains the user ID of the card.
+  if (status != STATUS_OK) {
+         printf("PCD_Authenticate() failed (read): %s\r\n", GetStatusCodeName(status));
+         return 3;//return "3" as error message
+  }
+  //it appears the authentication needs to be made before every block read/write within a specific sector.
+  //If a different sector is being authenticated access to the previous one is lost.
+
+
+  /*****************************************reading a block***********************************************************/
+
+  byte buffersize = 18;//we need to define a variable with the read buffer size, since the MIFARE_Read method below needs a pointer to the variable that contains the size...
+  status = MIFARE_Read(blockNumber, arrayAddress, &buffersize);//&buffersize is a pointer to the buffersize variable; MIFARE_Read requires a pointer instead of just a number
+  if (status != STATUS_OK) {
+          printf("MIFARE_read() failed: %s\r\n", GetStatusCodeName(status));
+          return 4;//return "4" as error message
+  }
+  printf("block was read\r\n");
+  return status;
 }
 
 /*******************************************************************************

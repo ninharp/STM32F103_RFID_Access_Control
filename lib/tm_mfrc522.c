@@ -26,10 +26,10 @@ void TM_MFRC522_Init(void) {
 
 	TM_MFRC522_Reset();
 
-	TM_MFRC522_WriteRegister(MFRC522_REG_T_MODE, 0x8D);
-	TM_MFRC522_WriteRegister(MFRC522_REG_T_PRESCALER, 0x3E);
-	TM_MFRC522_WriteRegister(MFRC522_REG_T_RELOAD_L, 30);           
-	TM_MFRC522_WriteRegister(MFRC522_REG_T_RELOAD_H, 0);
+	TM_MFRC522_WriteRegister(MFRC522_REG_T_MODE, 0x80); // 0x8D
+	TM_MFRC522_WriteRegister(MFRC522_REG_T_PRESCALER, 0xA9); // 0x3E
+	TM_MFRC522_WriteRegister(MFRC522_REG_T_RELOAD_L, 0xE8); // 30
+	TM_MFRC522_WriteRegister(MFRC522_REG_T_RELOAD_H, 0x03); // 00
 
 	/* 48dB gain */
 	TM_MFRC522_WriteRegister(MFRC522_REG_RF_CFG, 0x70);
@@ -100,8 +100,7 @@ uint8_t TM_MFRC522_ReadRegister(uint8_t addr) {
 	MFRC522_CS_LOW;
 
 	SPI1_Write(((addr << 1) & 0x7E) | 0x80);
-	val = SPI1_Write(MFRC522_DUMMY);
-	//printf("Val=0x%02x\r\n", val);
+	val = SPI1_Read(MFRC522_DUMMY);
 	//CS high
 	MFRC522_CS_HIGH;
 
@@ -190,7 +189,7 @@ TM_MFRC522_Status_t TM_MFRC522_ToCard(uint8_t command, uint8_t* sendData, uint8_
 	}   
 
 	//Waiting to receive data to complete
-	i = 2000;	//i according to the clock frequency adjustment, the operator M1 card maximum waiting time 25ms???
+	i = 100;	//i according to the clock frequency adjustment, the operator M1 card maximum waiting time 25ms???
 	do {
 		//CommIrqReg[7..0]
 		//Set1 TxIRq RxIRq IdleIRq HiAlerIRq LoAlertIRq ErrIRq TimerIRq
@@ -209,6 +208,7 @@ TM_MFRC522_Status_t TM_MFRC522_ToCard(uint8_t command, uint8_t* sendData, uint8_
 
 			if (command == PCD_TRANSCEIVE) {
 				n = TM_MFRC522_ReadRegister(MFRC522_REG_FIFO_LEVEL);
+				uint8_t l = n;
 				lastBits = TM_MFRC522_ReadRegister(MFRC522_REG_CONTROL) & 0x07;
 				if (lastBits) {   
 					*backLen = (n - 1) * 8 + lastBits;   
@@ -226,10 +226,12 @@ TM_MFRC522_Status_t TM_MFRC522_ToCard(uint8_t command, uint8_t* sendData, uint8_
 				//Reading the received data in FIFO
 				for (i = 0; i < n; i++) {   
 					uint8_t d = TM_MFRC522_ReadRegister(MFRC522_REG_FIFO_DATA);
-					//printf("%02x ", d);
+					if (l == 4)
+						printf("%02x ", d);
 					backData[i] = d;
 				}
-				//printf("\r\n");
+				if (l==4)
+					printf("\r\n");
 				return status;
 			}
 		} else {   
@@ -246,12 +248,18 @@ TM_MFRC522_Status_t TM_MFRC522_Anticoll(uint8_t* serNum) {
 	uint8_t i;
 	uint8_t serNumCheck = 0;
 	uint16_t unLen;
+	//for (i = 0; i < 4; i++)
+	//	printf("Anticoll In %d: 0x%02x\r\n", i, serNum[i]);
+
 
 	TM_MFRC522_WriteRegister(MFRC522_REG_BIT_FRAMING, 0x00);		//TxLastBists = BitFramingReg[2..0]
 
 	serNum[0] = PICC_ANTICOLL;
 	serNum[1] = 0x20;
 	status = TM_MFRC522_ToCard(PCD_TRANSCEIVE, serNum, 2, serNum, &unLen);
+
+	//for (i = 0; i < 4; i++)
+	//		printf("Anticoll ToCard %d: 0x%02x\r\n", i, serNum[i]);
 
 	if (status == MI_OK) {
 		//Check card serial number

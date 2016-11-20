@@ -23,7 +23,8 @@
 #endif
 #include "feedback.h" // feedback routines
 #include "tm_keypad.h" // keymatrix input library
-#include "tm_mfrc522.h" // mfrc522 rfid reader library
+//#include "tm_mfrc522.h" // mfrc522 rfid reader library
+#include "mfrc522.h"
 #include "general.h" // general includes and defines
 
 void Delay(vu32 nCount);
