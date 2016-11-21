@@ -18,9 +18,9 @@
 /* Exported typedef -----------------------------------------------------------*/
 /* Exported define ------------------------------------------------------------*/
 #define LED_RED_PORT	GPIOA
-#define LED_RED_PIN		GPIO_Pin_0
+#define LED_RED_PIN		GPIO_Pin_1
 #define LED_GREEN_PORT	GPIOA
-#define LED_GREEN_PIN	GPIO_Pin_1
+#define LED_GREEN_PIN	GPIO_Pin_0
 
 /* Exported macro -------------------------------------------------------------*/
 #define LedOn(pin) Feedback_Led(pin, true);
