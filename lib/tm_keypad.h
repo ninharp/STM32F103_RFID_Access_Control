@@ -141,9 +141,9 @@ R4			PC5				Row 4
 #endif
 /* Row 4 default */
 #ifndef KEYPAD_ROW_4_PIN
-#define KEYPAD_ROW_4_PORT			GPIOD
-#define KEYPAD_ROW_4_PIN			GPIO_Pin_2
-#define KEYPAD_ROW_4_CLK			RCC_APB2Periph_GPIOD
+#define KEYPAD_ROW_4_PORT			GPIOC
+#define KEYPAD_ROW_4_PIN			GPIO_Pin_1
+#define KEYPAD_ROW_4_CLK			RCC_APB2Periph_GPIOC
 #endif
 /* Row 5 default */
 #ifndef KEYPAD_ROW_5_PIN
