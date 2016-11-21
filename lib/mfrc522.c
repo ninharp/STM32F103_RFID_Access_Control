@@ -315,13 +315,13 @@ byte PCD_CommunicateWithPICC(	byte command,		///< The command to execute. One of
 	// Wait for the command to complete.
 	// In PCD_Init() we set the TAuto flag in TModeReg. This means the timer automatically starts when the PCD stops transmitting.
 	// Each iteration of the do-while-loop takes 17.86µs.
-	i = 2000;
+	i = 10000;
 	while (1) {
 		n = PCD_ReadRegister(ComIrqReg);	// ComIrqReg[7..0] bits are: Set1 TxIRq RxIRq IdleIRq   HiAlertIRq LoAlertIRq ErrIRq TimerIRq
 		if (n & waitIRq) {					// One of the interrupts that signal success has been set.
 			break;
 		}
-		if (n & 0x01) {						// Timer interrupt - nothing received in 25ms
+		if (n & 0x01) {	// Timer interrupt - nothing received in 25ms
 			return STATUS_TIMEOUT;
 		}
 		if (--i == 0) {						// The emergency break. If all other condions fail we will eventually terminate on this one after 35.7ms. Communication with the MFRC522 might be down.
@@ -1127,7 +1127,7 @@ void PICC_DumpMifareClassicToSerial(	Uid *uid,		///< Pointer to Uid struct retur
 
 	// Dump sectors, highest address first.
 	if (no_of_sectors) {
-		printf("Sector Block   0  1  2  3   4  5  6  7   8  9 10 11  12 13 14 15  AccessBits");
+		printf("Sector Block   0  1  2  3   4  5  6  7   8  9 10 11  12 13 14 15  AccessBits\r\n");
 		for (char i = no_of_sectors - 1; i >= 0; i--) {
 			PICC_DumpMifareClassicSectorToSerial(uid, key, i);
 		}
@@ -1211,7 +1211,7 @@ void PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to Uid struct
 		}
 		// Dump data
 		for (byte index = 0; index < 16; index++) {
-			printf("%s%02x", buffer[index] < 0x10 ? " 0" : " ", buffer[index]);
+			printf(" %02x", buffer[index]);
 			if ((index % 4) == 3) {
 				printf(" ");
 			}

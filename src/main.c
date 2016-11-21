@@ -1,7 +1,13 @@
-/*
- * @version 0.1.244
- */
-
+/**
+ * @file main.c
+ *
+ * @brief This file includes the main routines
+ *
+ * @author Michael Sauer <sauer.uetersen@gmail.com>
+ *
+ * @date 09.11.2016 - First Version
+ *
+ **/
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f10x.h"
@@ -20,7 +26,7 @@ static __IO uint32_t TimingDelay_ms;
 MIFARE_Key key;
 int block=2;//this is the block number we will write into and then read. Do not write into 'sector trailer' block, since this can make the block unusable.
 
-byte blockcontent[16] = {"ninharp_________"}; // an array with 16 bytes to be written into one of the 64 card blocks is defined
+byte blockcontent[16] = "1234567890123456"; // an array with 16 bytes to be written into one of the 64 card blocks is defined
 //byte blockcontent[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //all zeros. This can be used to delete a block.
 byte readbackblock[18]; // This array is used for reading out a block. The MIFARE_Read method requires a buffer that is at least 18 bytes to hold the 16 bytes of a block.
 
@@ -72,7 +78,7 @@ int main(void)
 	DelayMS(1000);
 	LedOff(LED_RED);
 	LedOff(LED_GREEN);
-	BeepBeep();
+	//BeepBeep();
 
 	/* Init MFRC522 Reader */
 	PCD_Init();
@@ -84,7 +90,7 @@ int main(void)
 	for (byte i = 0; i < 6; i++) {
 			key.keyByte[i] = 0xFF;//keyByte is defined in the "MIFARE_Key" 'struct' definition in the .h file of the library
 	}
-	printf("Scan a MIFARE Classic card\r\n");
+	//printf("Scan a MIFARE Classic card\r\n");
 
 	/* TM_RFC522 RFID Reader init */
 	//TM_MFRC522_Init();
@@ -105,8 +111,8 @@ int main(void)
 	unsigned long timerUpdate = millis();
 	unsigned long timerDebounce = millis();
 
-	//Delay(600000);
-	//printf("boot io! v%d.%d.%d\r\n\n", ver_maj, ver_min, ver_build);
+	Delay(600000);
+	printf("boot io! v%d.%d.%d\r\n\n", ver_maj, ver_min, ver_build);
 #ifdef DEBUG
 	//printClocks();
 #endif
@@ -118,7 +124,7 @@ int main(void)
 
 		// Look for new cards (in case you wonder what PICC means: proximity integrated circuit card)
 		if (PICC_IsNewCardPresent() == 1) {//if PICC_IsNewCardPresent returns 1, a new card has been found and we continue
-			printf("card found\r\n");
+			//printf("card found\r\n");
 			// Select one of the cards
 			if (PICC_ReadCardSerial()) {//if PICC_ReadCardSerial returns 1, the "uid" struct (see h lines 238-45)) contains the ID of the read card.
 				// Among other things, the PICC_ReadCardSerial() method reads the UID and the SAK (Select acknowledge) into the uid struct, which is also instantiated
@@ -131,12 +137,11 @@ int main(void)
 				//byte		sak;			// The SAK (Select acknowledge) byte returned from the PICC after successful selection.
 					//} Uid;
 
-				 printf("card selected\r\n");
+				 //printf("card selected\r\n");
 
 				 /*****************************************writing and reading a block on the card**********************************************************************/
 
 				 writeBlock(block, blockcontent);//the blockcontent array is written into the card block
-				 PICC_DumpToSerial(&(uid));
 
 				 //The 'PICC_DumpToSerial' method 'dumps' the entire MIFARE data block into the serial monitor. Very useful while programming a sketch with the RFID reader...
 				 //Notes:
@@ -145,15 +150,18 @@ int main(void)
 				 //(3) The dump takes longer than the time alloted for interaction per pairing between reader and card, i.e. the readBlock function below will produce a timeout if
 				 //    the dump is used.
 
-				 //PICC_DumpToSerial(&(uid));//uncomment this if you want to see the entire 1k memory with the block written into it.
+				 //DelayMS(1000);
 
 				 readBlock(block, readbackblock);//read the block back
-				 printf("read block: ");
+				 //PICC_DumpToSerial(&(uid));//uncomment this if you want to see the entire 1k memory with the block written into it.
+				 printf("%02x%02x%02x%02x read block: ", uid.uidByte[0], uid.uidByte[1], uid.uidByte[2], uid.uidByte[3]);
 				 for (int j=0 ; j<16 ; j++)//print the block contents
 				 {
 					 printf("%c", readbackblock[j]); // transmits the ASCII numbers as human readable characters to serial monitor
 				 }
 				 printf("\r\n");
+				 PICC_HaltA();
+				 PCD_StopCrypto1();
 			}
 		}
 
@@ -177,7 +185,7 @@ int main(void)
 		*/
 
 		/* Keypad was pressed */
-		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 500)) {/* Keypad is pressed */
+		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 100)) {/* Keypad is pressed */
 			KeyFeedback();
 			switch (Keypad_Button) {
 				case TM_KEYPAD_Button_0:        /* Button 0 pressed */
@@ -200,7 +208,6 @@ int main(void)
 					break;
 				case TM_KEYPAD_Button_6:        /* Button 6 pressed */
 					printf("Button 6\r\n");
-					LedOn(LED_RED);
 					break;
 				case TM_KEYPAD_Button_7:        /* Button 7 pressed */
 					printf("Button 7\r\n");
@@ -283,12 +290,14 @@ void IO_Init(void)
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-	/* Init User Led on Nucleo Board PA5 */
+	/* Init User Led on Nucleo Board PA5 (D13) also SPI SCK */
+	/*
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	*/
 }
 
 /*******************************************************************************
