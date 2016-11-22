@@ -35,7 +35,10 @@ void Feedback_Init(void)
 
 		// Configure as output mode push/pull
 		GPIO_InitStructure.GPIO_Pin = Feedback[feedback_pin].FEEDBACK_PIN;
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+		if (feedback_pin == BUZZER)
+			GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+		else
+			GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 		GPIO_Init(Feedback[feedback_pin].FEEDBACK_PORT, &GPIO_InitStructure);
 
