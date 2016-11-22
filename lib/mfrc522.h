@@ -223,19 +223,6 @@ enum PICC_Type {
 	PICC_TYPE_NOT_COMPLETE	= 255	// SAK indicates UID is not complete.
 };
 
-// Return codes from the functions in this class. Remember to update GetStatusCodeName() if you add more.
-enum StatusCode {
-	STATUS_OK				= 1,	// Success
-	STATUS_ERROR			= 2,	// Error in communication
-	STATUS_COLLISION		= 3,	// Collission detected
-	STATUS_TIMEOUT			= 4,	// Timeout in communication.
-	STATUS_NO_ROOM			= 5,	// A buffer is not big enough.
-	STATUS_INTERNAL_ERROR	= 6,	// Internal error in the code. Should not happen ;-)
-	STATUS_INVALID			= 7,	// Invalid argument.
-	STATUS_CRC_WRONG		= 8,	// The CRC_A does not match
-	STATUS_MIFARE_NACK		= 9		// A MIFARE PICC responded with NAK.
-};
-
 // A struct used for passing the UID of a PICC.
 typedef struct {
 	byte		size;			// Number of bytes in the UID. 4, 7 or 10.
@@ -324,8 +311,8 @@ void MIFARE_SetAccessBits(byte *accessBitBuffer, byte g0, byte g1, byte g2, byte
 bool PICC_IsNewCardPresent();
 bool PICC_ReadCardSerial();
 
-int writeBlock(int blockNumber, byte arrayAddress[]);
-int readBlock(int blockNumber, byte arrayAddress[]);
+int PICC_ReadBlock(int blockNumber, byte arrayAddress[], MIFARE_Key *key);
+int PICC_WriteBlock(int blockNumber, byte arrayAddress[], MIFARE_Key *key);
 #endif /* LIB_MFRC522_H_ */
 
 

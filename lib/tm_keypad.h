@@ -113,12 +113,17 @@ R4			PC5				Row 4
  * Includes
  */
 #include "stm32f10x.h"
+#include "general.h"
 
 /**
  * @defgroup TM_KEYPAD_Macros
  * @brief    Library defines
  * @{
  */
+
+/* PIN Input defines */
+#define PIN_LENGTH 4
+#define KEYPAD_INPUT_TIMEOUT 5000
  
 /* Rows */
 /* Row 1 default */
@@ -241,10 +246,11 @@ void TM_KEYPAD_Init(void);
 
 /**
  * @brief  Reads keypad data
- * @param  None
  * @retval Button status. This parameter will be a value of @ref TM_KEYPAD_Button_t enumeration
  */
 TM_KEYPAD_Button_t TM_KEYPAD_Read(void);
+
+uint8_t Keypad_EnterPin(uint8_t pin_sec[4]);
 
 /**
  * @brief  Updates keypad

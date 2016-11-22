@@ -7,7 +7,7 @@
  *
  * @date 09.11.2016 - First Version
  *
- * @version 0.1.381
+ * @version 0.1.404
  **/
 
 //--------------------------------------------------------------
@@ -26,7 +26,8 @@
 #include "feedback.h" // feedback routines
 #include "tm_keypad.h" // keymatrix input library
 //#include "tm_mfrc522.h" // mfrc522 rfid reader library
-#include "mfrc522.h"
+#include "mfrc522.h" // include mfrc522 rfid reader library (from arduino)
+#include "rfid_tag.h" // include rfid tag functions
 #include "general.h" // general includes and defines
 
 void Delay(vu32 nCount);

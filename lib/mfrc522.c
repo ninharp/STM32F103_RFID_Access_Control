@@ -1343,3 +1343,76 @@ bool PICC_ReadCardSerial() {
 	return (result == STATUS_OK);//return a '1' if PICC_Select returns a '1', else a '0'
 } // End PICC_ReadCardSerial()
 
+int PICC_WriteBlock(int blockNumber, byte arrayAddress[], MIFARE_Key *key)
+{
+  //this makes sure that we only write into data blocks. Every 4th block is a trailer block for the access/security info.
+  int largestModulo4Number=blockNumber/4*4;
+  int trailerBlock=largestModulo4Number+3;//determine trailer block for the sector
+  if (blockNumber > 2 && (blockNumber+1)%4 == 0){
+	  printf("%d is a trailer block:", blockNumber);
+	  return 2;
+  }//block number is a trailer block (modulo 4); quit and send error code 2
+  //printf("%d is a data block:", blockNumber);
+
+  /*****************************************authentication of the desired block for access***********************************************************/
+  byte status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, trailerBlock, key, &(uid));
+  //byte PCD_Authenticate(byte command, byte blockAddr, MIFARE_Key *key, Uid *uid);
+  //this method is used to authenticate a certain block for writing or reading
+  //command: See enumerations above -> PICC_CMD_MF_AUTH_KEY_A	= 0x60 (=1100000),		// this command performs authentication with Key A
+  //blockAddr is the number of the block from 0 to 15.
+  //MIFARE_Key *key is a pointer to the MIFARE_Key struct defined above, this struct needs to be defined for each block. New cards have all A/B= FF FF FF FF FF FF
+  //Uid *uid is a pointer to the UID struct that contains the user ID of the card.
+  if (status != STATUS_OK) {
+         printf("PCD_Authenticate() failed: %s\r\n", GetStatusCodeName(status));
+         return 3;//return "3" as error message
+  }
+  //it appears the authentication needs to be made before every block read/write within a specific sector.
+  //If a different sector is being authenticated access to the previous one is lost.
+
+
+  /*****************************************writing the block***********************************************************/
+
+  status = MIFARE_Write(blockNumber, arrayAddress, 16);//valueBlockA is the block number, MIFARE_Write(block number (0-15), byte array containing 16 values, number of bytes in block (=16))
+  //status = mfrc522.MIFARE_Write(9, value1Block, 16);
+  if (status != STATUS_OK) {
+           printf("MIFARE_Write() failed: %s\r\n", GetStatusCodeName(status));
+           return 4;//return "4" as error message
+  }
+  //printf("block was written\r\n");
+  return status;
+}
+
+
+int PICC_ReadBlock(int blockNumber, byte arrayAddress[], MIFARE_Key *key)
+{
+  int largestModulo4Number=blockNumber/4*4;
+  int trailerBlock=largestModulo4Number+3;//determine trailer block for the sector
+
+  /*****************************************authentication of the desired block for access***********************************************************/
+  byte status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, trailerBlock, key, &(uid));
+  //byte PCD_Authenticate(byte command, byte blockAddr, MIFARE_Key *key, Uid *uid);
+  //this method is used to authenticate a certain block for writing or reading
+  //command: See enumerations above -> PICC_CMD_MF_AUTH_KEY_A	= 0x60 (=1100000),		// this command performs authentication with Key A
+  //blockAddr is the number of the block from 0 to 15.
+  //MIFARE_Key *key is a pointer to the MIFARE_Key struct defined above, this struct needs to be defined for each block. New cards have all A/B= FF FF FF FF FF FF
+  //Uid *uid is a pointer to the UID struct that contains the user ID of the card.
+  if (status != STATUS_OK) {
+         printf("PCD_Authenticate() failed (read): %s\r\n", GetStatusCodeName(status));
+         return 3;//return "3" as error message
+  }
+  //it appears the authentication needs to be made before every block read/write within a specific sector.
+  //If a different sector is being authenticated access to the previous one is lost.
+
+
+  /*****************************************reading a block***********************************************************/
+
+  byte buffersize = 18;//we need to define a variable with the read buffer size, since the MIFARE_Read method below needs a pointer to the variable that contains the size...
+  status = MIFARE_Read(blockNumber, arrayAddress, &buffersize);//&buffersize is a pointer to the buffersize variable; MIFARE_Read requires a pointer instead of just a number
+  if (status != STATUS_OK) {
+          printf("MIFARE_read() failed: %s\r\n", GetStatusCodeName(status));
+          return 4;//return "4" as error message
+  }
+  //printf("block was read\r\n");
+  return status;
+}
+

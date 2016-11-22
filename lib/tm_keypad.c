@@ -17,6 +17,8 @@
  * |----------------------------------------------------------------------
  */
 #include "tm_keypad.h"
+#include "feedback.h"
+#include "dwt.h"
 
 /* Pins configuration, columns are outputs */
 #define KEYPAD_COLUMN_1_HIGH		GPIO_SetBits(KEYPAD_COLUMN_1_PORT, KEYPAD_COLUMN_1_PIN)
@@ -112,6 +114,91 @@ TM_KEYPAD_Button_t TM_KEYPAD_Read(void) {
 	KeypadStatus = TM_KEYPAD_Button_NOPRESSED;
 	
 	return temp;
+}
+
+uint8_t Keypad_EnterPin(uint8_t pin_sec[4])
+{
+	TM_KEYPAD_Button_t Keypad_Button;
+	long timerDebounce = millis();
+	bool pin_complete = false;
+	bool timeoutReached = false;
+	uint8_t pin[PIN_LENGTH];
+	for (uint8_t i = 0; i < PIN_LENGTH; i++) {
+		pin[i] = 0;
+	}
+	uint8_t pin_pos = 0;
+	long timerTimeout = millis();
+	bool pin_correct = true;
+
+	while(!pin_complete && !timeoutReached) {
+		/* Read keyboard data */
+		Keypad_Button = TM_KEYPAD_Read();
+
+		/* Keypad was pressed */
+		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 100)) {/* Keypad is pressed */
+			if ((Keypad_Button < 9) || (Keypad_Button == TM_KEYPAD_Button_ENT))
+				KeyFeedback();
+			switch (Keypad_Button) {
+				case TM_KEYPAD_Button_0:        /* Button 0 pressed */
+					pin[pin_pos++] = 0;
+					break;
+				case TM_KEYPAD_Button_1:        /* Button 1 pressed */
+					pin[pin_pos++] = 1;
+					break;
+				case TM_KEYPAD_Button_2:        /* Button 2 pressed */
+					pin[pin_pos++] = 2;
+					break;
+				case TM_KEYPAD_Button_3:        /* Button 3 pressed */
+					pin[pin_pos++] = 3;
+					break;
+				case TM_KEYPAD_Button_4:        /* Button 4 pressed */
+					KeyFeedback();
+					pin[pin_pos++] = 4;
+					break;
+				case TM_KEYPAD_Button_5:        /* Button 5 pressed */
+					pin[pin_pos++] = 5;
+					break;
+				case TM_KEYPAD_Button_6:        /* Button 6 pressed */
+					pin[pin_pos++] = 6;
+					break;
+				case TM_KEYPAD_Button_7:        /* Button 7 pressed */
+					pin[pin_pos++] = 7;
+					break;
+				case TM_KEYPAD_Button_8:        /* Button 8 pressed */
+					pin[pin_pos++] = 8;
+					break;
+				case TM_KEYPAD_Button_9:        /* Button 9 pressed */
+					pin[pin_pos++] = 9;
+					break;
+				case TM_KEYPAD_Button_ENT:        /* Button Enter pressed */
+					pin_complete = true;
+					break;
+				default:
+					break;
+			}
+			if (pin_pos > 3)
+				pin_pos = 0;
+			Keypad_Button = TM_KEYPAD_Button_NOPRESSED;
+			timerDebounce = millis();
+			timerTimeout = millis();
+		}
+
+		if ((millis()-timerTimeout) >= KEYPAD_INPUT_TIMEOUT) {
+			timeoutReached = true;
+			return STATUS_TIMEOUT;
+		}
+	}
+	printf("PIN Entered: ");
+	for (uint8_t i = 0; i < PIN_LENGTH; i++) {
+		if (pin_sec[i] != pin[i])
+			pin_correct = false;
+		printf("%d", pin[i]);
+	}
+	printf("\r\n");
+	if (pin_correct)
+		return STATUS_OK;
+	else
+		return STATUS_INVALID;
 }
 
 /* Private */

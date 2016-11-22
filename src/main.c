@@ -38,17 +38,6 @@ void TimingDelay_Increment(void);
 void SysTick_Handler(void);
 void printClocks(void);
 
-uint8_t Keypad_EnterPin(uint8_t pin_sec[4]);
-
-uint8_t TAG_WriteName(char *name);
-uint8_t TAG_WriteSurname(char *name);
-uint8_t TAG_WritePin(uint8_t *pin);
-uint8_t TAG_ReadPin(uint8_t *pin);
-uint8_t TAG_ReadConfig(uint8_t *config);
-uint8_t TAG_ReadName(char *name);
-uint8_t TAG_ReadSurname(char *name);
-uint8_t TAG_CheckID(uint8_t id[4]);
-
 int main(void)
 {
 	NVIC_InitTypeDef NVIC_InitStructure;
@@ -156,10 +145,10 @@ start_loop:
 			printf("Tag ID: %02x%02x%02x%02x\r\n", uid.uidByte[0], uid.uidByte[1], uid.uidByte[2], uid.uidByte[3]);
 
 			/*****************************************writing and reading a block on the card**********************************************************************/
-			//TAG_WriteName("Sarah");
-			//TAG_WriteSurname("Pradel");
+			//TAG_WriteName("Sarah", key);
+			//TAG_WriteSurname("Pradel", key);
 			//uint8_t pin[4] = {2,0,1,2};
-			//TAG_WritePin(pin);
+			//TAG_WritePin(pin, key);
 
 			//PICC_DumpToSerial(&(uid));//uncomment this if you want to see the entire 1k memory with the block written into it.
 
@@ -173,23 +162,22 @@ start_loop:
 			//(3) The dump takes longer than the time alloted for interaction per pairing between reader and card, i.e. the readBlock function below will produce a timeout if
 			//    the dump is used.
 
-			//DelayMS(1000);
 			if (TAG_CheckID(uid.uidByte) == STATUS_OK) {
 				char name[18];
 				char fullname[36];
 				uint8_t pin[4];
 				memset(fullname, 0x00, 36);
-				if (TAG_ReadName(name) == STATUS_OK) {
+				if (TAG_ReadName(name, &key) == STATUS_OK) {
 					printf("Name: %s ", name);
 					strcat(fullname, name);
-					if (TAG_ReadSurname(name) == STATUS_OK) {
+					if (TAG_ReadSurname(name, &key) == STATUS_OK) {
 						printf("%s\r\n", name);
 						strcat(fullname, " ");
 						strcat(fullname, name);
 					} else {
 						printf("\r\n");
 					}
-					TAG_ReadPin(pin);
+					TAG_ReadPin(pin, &key);
 					printf("PIN is %d %d %d %d\r\n", pin[0], pin[1], pin[2], pin[3]);
 					LedBlink(LED_GREEN, 2);
 					LedOn(LED_GREEN);
@@ -232,185 +220,7 @@ start_loop:
 	}
 }
 
-#define PIN_LENGTH 4
-#define KEYPAD_INPUT_TIMEOUT 5000
 
-uint8_t Keypad_EnterPin(uint8_t pin_sec[4])
-{
-	TM_KEYPAD_Button_t Keypad_Button;
-	long timerDebounce = millis();
-	bool pin_complete = false;
-	bool timeoutReached = false;
-	uint8_t pin[PIN_LENGTH];
-	//uint8_t pin_sec[PIN_LENGTH] = { 2,0,1,2 };
-	uint8_t pin_pos = 0;
-	long timerTimeout = millis();
-	bool pin_correct = true;
-
-	while(!pin_complete && !timeoutReached) {
-		/* Read keyboard data */
-		Keypad_Button = TM_KEYPAD_Read();
-
-		/* Keypad was pressed */
-		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 100)) {/* Keypad is pressed */
-			if ((Keypad_Button < 9) || (Keypad_Button == TM_KEYPAD_Button_ENT))
-				KeyFeedback();
-			switch (Keypad_Button) {
-				case TM_KEYPAD_Button_0:        /* Button 0 pressed */
-					pin[pin_pos++] = 0;
-					break;
-				case TM_KEYPAD_Button_1:        /* Button 1 pressed */
-					pin[pin_pos++] = 1;
-					break;
-				case TM_KEYPAD_Button_2:        /* Button 2 pressed */
-					pin[pin_pos++] = 2;
-					break;
-				case TM_KEYPAD_Button_3:        /* Button 3 pressed */
-					pin[pin_pos++] = 3;
-					break;
-				case TM_KEYPAD_Button_4:        /* Button 4 pressed */
-					KeyFeedback();
-					pin[pin_pos++] = 4;
-					break;
-				case TM_KEYPAD_Button_5:        /* Button 5 pressed */
-					pin[pin_pos++] = 5;
-					break;
-				case TM_KEYPAD_Button_6:        /* Button 6 pressed */
-					pin[pin_pos++] = 6;
-					break;
-				case TM_KEYPAD_Button_7:        /* Button 7 pressed */
-					pin[pin_pos++] = 7;
-					break;
-				case TM_KEYPAD_Button_8:        /* Button 8 pressed */
-					pin[pin_pos++] = 8;
-					break;
-				case TM_KEYPAD_Button_9:        /* Button 9 pressed */
-					pin[pin_pos++] = 9;
-					break;
-				case TM_KEYPAD_Button_ENT:        /* Button Enter pressed */
-					pin_complete = true;
-					break;
-				default:
-					break;
-			}
-			if (pin_pos > 3)
-				pin_pos = 0;
-			Keypad_Button = TM_KEYPAD_Button_NOPRESSED;
-			timerDebounce = millis();
-			timerTimeout = millis();
-		}
-
-		if ((millis()-timerTimeout) >= KEYPAD_INPUT_TIMEOUT) {
-			timeoutReached = true;
-			return STATUS_TIMEOUT;
-		}
-	}
-	printf("PIN Entered: ");
-	for (uint8_t i = 0; i < PIN_LENGTH; i++) {
-		if (pin_sec[i] != pin[i])
-			pin_correct = false;
-		printf("%d", pin[i]);
-	}
-	printf("\r\n");
-	if (pin_correct)
-		return STATUS_OK;
-	else
-		return STATUS_INVALID;
-}
-
-#define PICC_BLOCK_CONFIG 2
-#define PICC_BLOCK_NAME 4
-#define PICC_BLOCK_SURNAME 5
-#define PICC_BLOCK_SIZE 16
-
-uint8_t TAG_WriteName(char *name)
-{
-	uint8_t len = strlen(name);
-	if (len > 16)
-		len = 16;
-	uint8_t out[PICC_BLOCK_SIZE];
-	strcpy(out, name);
-	for (int i = strlen(name); i < PICC_BLOCK_SIZE; i++)
-		out[i] = 0x00;
-	return writeBlock(PICC_BLOCK_NAME, out);
-}
-
-uint8_t TAG_WriteSurname(char *name)
-{
-	uint8_t len = strlen(name);
-	if (len > 16)
-		len = 16;
-	uint8_t out[PICC_BLOCK_SIZE];
-	strcpy(out, name);
-	for (int i = strlen(name); i < PICC_BLOCK_SIZE; i++)
-		out[i] = 0x00;
-	return writeBlock(PICC_BLOCK_SURNAME, out);
-}
-
-uint8_t TAG_WritePin(uint8_t *pin)
-{
-	uint8_t config[PICC_BLOCK_SIZE+2];
-	TAG_ReadConfig(config);
-	for (uint8_t i = 0; i < PIN_LENGTH; i++)
-		config[(PICC_BLOCK_SIZE-PIN_LENGTH)+i] = pin[i];
-	return writeBlock(PICC_BLOCK_CONFIG, config);
-}
-
-uint8_t TAG_ReadPin(uint8_t *pin)
-{
-	char in[PICC_BLOCK_SIZE+2];
-	uint8_t status = readBlock(PICC_BLOCK_CONFIG, in);
-	for (int i = (PICC_BLOCK_SIZE-PIN_LENGTH); i < PICC_BLOCK_SIZE; i++) {
-		pin[i-12] = in[i];
-	}
-	return status;
-}
-
-uint8_t TAG_ReadConfig(uint8_t *config)
-{
-	char in[PICC_BLOCK_SIZE+2];
-	uint8_t status = readBlock(PICC_BLOCK_CONFIG, in);
-	strcpy(config, in);
-	return status;
-}
-
-uint8_t TAG_ReadName(char *name)
-{
-	char in[PICC_BLOCK_SIZE+2];
-	uint8_t status = readBlock(PICC_BLOCK_NAME, in);
-	strcpy(name, in);
-	return status;
-}
-
-uint8_t TAG_ReadSurname(char *name)
-{
-	char in[PICC_BLOCK_SIZE+2];
-	uint8_t status = readBlock(PICC_BLOCK_SURNAME, in);
-	strcpy(name, in);
-	return status;
-}
-
-uint8_t TAG_CheckID(uint8_t *id)
-{
-	uint8_t allowed_ids[3][4] = {
-			{ 0x52, 0xb0, 0xdf, 0x6e }, //Michael
-			{ 0x42, 0xde, 0xde, 0x6e }, //Hubert
-			{ 0x37, 0x51, 0x42, 0xa1 }, //Sarah
-	};
-	uint8_t id_c = 0;
-	for (uint8_t aid = 0; aid < 3; aid++) {
-		for (uint8_t i = 0; i < 4; i++) {
-			if (id[i] == allowed_ids[aid][i])
-				id_c++;
-		}
-		if (id_c >= 4) {
-			return STATUS_OK;
-		} else {
-			id_c = 0;
-		}
-	}
-	return STATUS_INVALID;
-}
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -510,79 +320,6 @@ void NVIC_Configuration(void)
 	/* Set the Vector Table base location at 0x08000000 */
 	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x0);
 #endif
-}
-
-int writeBlock(int blockNumber, byte arrayAddress[])
-{
-  //this makes sure that we only write into data blocks. Every 4th block is a trailer block for the access/security info.
-  int largestModulo4Number=blockNumber/4*4;
-  int trailerBlock=largestModulo4Number+3;//determine trailer block for the sector
-  if (blockNumber > 2 && (blockNumber+1)%4 == 0){
-	  printf("%d is a trailer block:", blockNumber);
-	  return 2;
-  }//block number is a trailer block (modulo 4); quit and send error code 2
-  //printf("%d is a data block:", blockNumber);
-
-  /*****************************************authentication of the desired block for access***********************************************************/
-  byte status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(uid));
-  //byte PCD_Authenticate(byte command, byte blockAddr, MIFARE_Key *key, Uid *uid);
-  //this method is used to authenticate a certain block for writing or reading
-  //command: See enumerations above -> PICC_CMD_MF_AUTH_KEY_A	= 0x60 (=1100000),		// this command performs authentication with Key A
-  //blockAddr is the number of the block from 0 to 15.
-  //MIFARE_Key *key is a pointer to the MIFARE_Key struct defined above, this struct needs to be defined for each block. New cards have all A/B= FF FF FF FF FF FF
-  //Uid *uid is a pointer to the UID struct that contains the user ID of the card.
-  if (status != STATUS_OK) {
-         printf("PCD_Authenticate() failed: %s\r\n", GetStatusCodeName(status));
-         return 3;//return "3" as error message
-  }
-  //it appears the authentication needs to be made before every block read/write within a specific sector.
-  //If a different sector is being authenticated access to the previous one is lost.
-
-
-  /*****************************************writing the block***********************************************************/
-
-  status = MIFARE_Write(blockNumber, arrayAddress, 16);//valueBlockA is the block number, MIFARE_Write(block number (0-15), byte array containing 16 values, number of bytes in block (=16))
-  //status = mfrc522.MIFARE_Write(9, value1Block, 16);
-  if (status != STATUS_OK) {
-           printf("MIFARE_Write() failed: %s\r\n", GetStatusCodeName(status));
-           return 4;//return "4" as error message
-  }
-  //printf("block was written\r\n");
-  return status;
-}
-
-
-int readBlock(int blockNumber, byte arrayAddress[])
-{
-  int largestModulo4Number=blockNumber/4*4;
-  int trailerBlock=largestModulo4Number+3;//determine trailer block for the sector
-
-  /*****************************************authentication of the desired block for access***********************************************************/
-  byte status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(uid));
-  //byte PCD_Authenticate(byte command, byte blockAddr, MIFARE_Key *key, Uid *uid);
-  //this method is used to authenticate a certain block for writing or reading
-  //command: See enumerations above -> PICC_CMD_MF_AUTH_KEY_A	= 0x60 (=1100000),		// this command performs authentication with Key A
-  //blockAddr is the number of the block from 0 to 15.
-  //MIFARE_Key *key is a pointer to the MIFARE_Key struct defined above, this struct needs to be defined for each block. New cards have all A/B= FF FF FF FF FF FF
-  //Uid *uid is a pointer to the UID struct that contains the user ID of the card.
-  if (status != STATUS_OK) {
-         printf("PCD_Authenticate() failed (read): %s\r\n", GetStatusCodeName(status));
-         return 3;//return "3" as error message
-  }
-  //it appears the authentication needs to be made before every block read/write within a specific sector.
-  //If a different sector is being authenticated access to the previous one is lost.
-
-
-  /*****************************************reading a block***********************************************************/
-
-  byte buffersize = 18;//we need to define a variable with the read buffer size, since the MIFARE_Read method below needs a pointer to the variable that contains the size...
-  status = MIFARE_Read(blockNumber, arrayAddress, &buffersize);//&buffersize is a pointer to the buffersize variable; MIFARE_Read requires a pointer instead of just a number
-  if (status != STATUS_OK) {
-          printf("MIFARE_read() failed: %s\r\n", GetStatusCodeName(status));
-          return 4;//return "4" as error message
-  }
-  //printf("block was read\r\n");
-  return status;
 }
 
 /*******************************************************************************
