@@ -1,6 +1,5 @@
 * Add on all files, doxygen specific tags, just before it starts to grow :)
 * Move Tag routines in dedicated file
-* Timeout on pin input
 * Secure PIN a lil' bit
 * Speed up auto versioning
 * Much more :)))

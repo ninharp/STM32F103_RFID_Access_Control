@@ -38,7 +38,7 @@ void TimingDelay_Increment(void);
 void SysTick_Handler(void);
 void printClocks(void);
 
-bool Keypad_EnterPin(uint8_t pin_sec[4]);
+uint8_t Keypad_EnterPin(uint8_t pin_sec[4]);
 
 uint8_t TAG_WriteName(char *name);
 uint8_t TAG_WriteSurname(char *name);
@@ -200,17 +200,27 @@ start_loop:
 
 				PICC_HaltA();
 				PCD_StopCrypto1();
-				if (Keypad_EnterPin(pin)) {
+				uint8_t status = Keypad_EnterPin(pin);
+				if (status == STATUS_OK) {
 					LedOff(LED_GREEN);
 					printf("Welcome %s, have a good time!\r\n", fullname);
 					LedBlink(LED_GREEN, 8);
 					DelayMS(500);
 					Beep();
 					// Open here or whatever
-				} else {
+				} else if (status == STATUS_INVALID) {
 					LedOff(LED_GREEN);
 					ErrorFeedback();
-					printf("Access denied for %s! Try will be reported!\r\n", fullname);
+					DelayMS(500);
+					printf("PIN Wrong for %s! Try will be reported!\r\n", fullname);
+					LedOff(LED_RED);
+				} else if (status == STATUS_TIMEOUT) {
+					LedOff(LED_GREEN);
+					ErrorFeedback();
+					LedBlink(LED_RED, 8);
+					DelayMS(500);
+					printf("PIN Input timeout for %s! Try will be reported!\r\n", fullname);
+					LedOff(LED_RED);
 				}
 			} else {
 				LedBlink(LED_RED, 5);
@@ -223,23 +233,28 @@ start_loop:
 }
 
 #define PIN_LENGTH 4
+#define KEYPAD_INPUT_TIMEOUT 5000
 
-bool Keypad_EnterPin(uint8_t pin_sec[4])
+uint8_t Keypad_EnterPin(uint8_t pin_sec[4])
 {
 	TM_KEYPAD_Button_t Keypad_Button;
 	long timerDebounce = millis();
 	bool pin_complete = false;
+	bool timeoutReached = false;
 	uint8_t pin[PIN_LENGTH];
 	//uint8_t pin_sec[PIN_LENGTH] = { 2,0,1,2 };
 	uint8_t pin_pos = 0;
+	long timerTimeout = millis();
+	bool pin_correct = true;
 
-	while(!pin_complete) {
+	while(!pin_complete && !timeoutReached) {
 		/* Read keyboard data */
 		Keypad_Button = TM_KEYPAD_Read();
 
 		/* Keypad was pressed */
 		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 100)) {/* Keypad is pressed */
-			KeyFeedback();
+			if ((Keypad_Button < 9) || (Keypad_Button == TM_KEYPAD_Button_ENT))
+				KeyFeedback();
 			switch (Keypad_Button) {
 				case TM_KEYPAD_Button_0:        /* Button 0 pressed */
 					pin[pin_pos++] = 0;
@@ -254,6 +269,7 @@ bool Keypad_EnterPin(uint8_t pin_sec[4])
 					pin[pin_pos++] = 3;
 					break;
 				case TM_KEYPAD_Button_4:        /* Button 4 pressed */
+					KeyFeedback();
 					pin[pin_pos++] = 4;
 					break;
 				case TM_KEYPAD_Button_5:        /* Button 5 pressed */
@@ -281,9 +297,14 @@ bool Keypad_EnterPin(uint8_t pin_sec[4])
 				pin_pos = 0;
 			Keypad_Button = TM_KEYPAD_Button_NOPRESSED;
 			timerDebounce = millis();
+			timerTimeout = millis();
+		}
+
+		if ((millis()-timerTimeout) >= KEYPAD_INPUT_TIMEOUT) {
+			timeoutReached = true;
+			return STATUS_TIMEOUT;
 		}
 	}
-	bool pin_correct = true;
 	printf("PIN Entered: ");
 	for (uint8_t i = 0; i < PIN_LENGTH; i++) {
 		if (pin_sec[i] != pin[i])
@@ -291,7 +312,10 @@ bool Keypad_EnterPin(uint8_t pin_sec[4])
 		printf("%d", pin[i]);
 	}
 	printf("\r\n");
-	return pin_correct;
+	if (pin_correct)
+		return STATUS_OK;
+	else
+		return STATUS_INVALID;
 }
 
 #define PICC_BLOCK_CONFIG 2
