@@ -1,0 +1,25 @@
+Structure of a Security Tag (Rev.1)
+
+In Sector 1 in Block 4 you find in 16 bytes the Name of the Tag holder, end with \0x00
+			   Block 5 you find in 16 bytes the Surname of the Tag holder end with \0x00
+			   
+In Sector 0 in Block 2 you find the configuration bytes and the PIN for the Tag
+				The PIN resides in the last bytes (depends on PIN length that is defined) of the config byte array
+				By default a PIN lenth of 4 digits was defined
+				The will be these bytes:
+   Sector 0 Block 2   4d 69 63 68  61 65 6c 00  4f 0d 00 08  [02 00 01 02] <--- PIN (32bit)
+   
+   Not implemented configs
+   Sector 0 Block 2   [4d] 69 63 68  61 65 6c 00  4f 0d 00 08  02 00 01 02 <--- Config Byte (8bit)
+   Sector 0 Block 2   4d [69 63 68]  61 65 6c 00  4f 0d 00 08  02 00 01 02 <--- Counter Uses (24bit)
+		  											  								
+The Tag is encrypted by standard Mifare key 0xFFFFFFFFFFFF, can be changed later in administration interface (hopefully)
+				
+   1      7   00 00 00 00  00 00 ff 07  80 69 ff ff  ff ff ff ff  [ 0 0 1 ] 
+          6   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00  [ 0 0 0 ] 
+          5   53 61 75 65  72 00 00 00  00 00 00 00  00 00 00 00  [ 0 0 0 ] Surname
+          4   4d 69 63 68  61 65 6c 00  00 00 00 00  00 00 00 00  [ 0 0 0 ] Name 
+   0      3   00 00 00 00  00 00 ff 07  80 69 ff ff  ff ff ff ff  [ 0 0 1 ] Trailer
+          2   4d 69 63 68  61 65 6c 00  4f 0d 00 08  02 00 01 02  [ 0 0 0 ] Config
+          1   00 00 00 00  00 00 00 00  00 00 00 00  00 00 00 00  [ 0 0 0 ] Reserved
+          0   52 b0 df 6e  53 08 04 00  01 13 82 f9  af 88 7f 1d  [ 0 0 0 ] Tag ID, Manufacturer code
