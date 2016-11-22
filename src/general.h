@@ -49,7 +49,7 @@
 /* Version Defines (automagically increased on build) */
 #define VER_MAJOR 0
 #define VER_MINOR 1
-#define VER_BUILD 286
+#define VER_BUILD 366
 
 /* Type definitions */
 typedef unsigned char  byte; // 1byte

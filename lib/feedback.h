@@ -25,11 +25,14 @@
 /* Exported macro -------------------------------------------------------------*/
 #define LedOn(pin) Feedback_Led(pin, true);
 #define LedOff(pin) Feedback_Led(pin, false);
+#define LedToggle(pin) Feedback_LedToggle(pin);
+#define LedBlink(pin, amount) for (uint8_t i = 0; i < amount+1; i++) { LedToggle(pin); DWT_Delay_ms(75); } LedOff(pin);
 #define LedKey() Feedback_Led(LED_RED, true); DWT_Delay_ms(50); Feedback_Led(LED_RED, false);
 #define Beep() Feedback_Beep(150);
 #define BeepKey() Feedback_Beep(90);
 #define BeepBeep() Beep(); DWT_Delay_ms(100); Beep();
-#define KeyFeedback() Feedback_Led(LED_RED, true); Feedback_Beep(90); Feedback_Led(LED_RED, false);
+#define KeyFeedback() Feedback_Led(LED_GREEN, true); Feedback_Beep(90); Feedback_Led(LED_GREEN, false);
+#define ErrorFeedback() Feedback_Led(LED_RED, true); BeepBeep(); DWT_Delay_ms(100); Feedback_Led(LED_RED, false);
 /* Exported variables ---------------------------------------------------------*/
 /*
  * List of all Pins for the feedbacks
@@ -37,8 +40,8 @@
  */
 typedef enum
 {
-  LED_RED = 0,   // LED Red Pin
-  LED_GREEN = 1, // LED Green Pin
+  LED_GREEN = 0, // LED Green Pin
+  LED_RED = 1,   // LED Red Pin
   BUZZER = 2,	 // Buzzer Pin
 }FEEDBACK_NAME_t;
 
@@ -64,6 +67,7 @@ typedef struct {
 /* Exported function prototypes ----------------------------------------------*/
 void Feedback_Init(void);									///< Initialize the Feedback I/O Ports
 void Feedback_Led(FEEDBACK_NAME_t feedback_pin, bool state);///< Sets Feedback LED to on or off
+void Feedback_LedToggle(FEEDBACK_NAME_t feedback_pin);			///< Toggles Feedback LED
 void Feedback_Beep(uint16_t delayms);						///< Beep the Buzzer fo x milliseconds
 void Feedback_BeepOff(void);
 #endif /* LIB_FEEDBACK_H_ */

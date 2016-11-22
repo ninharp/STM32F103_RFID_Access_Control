@@ -62,6 +62,14 @@ void Feedback_Led(FEEDBACK_NAME_t feedback_pin, bool state)
 	}
 }
 
+void Feedback_LedToggle(FEEDBACK_NAME_t feedback_pin)
+{
+	if (GPIO_ReadInputDataBit(Feedback[feedback_pin].FEEDBACK_PORT, Feedback[feedback_pin].FEEDBACK_PIN) == 0)
+		GPIO_SetBits(Feedback[feedback_pin].FEEDBACK_PORT, Feedback[feedback_pin].FEEDBACK_PIN);
+	else
+		GPIO_ResetBits(Feedback[feedback_pin].FEEDBACK_PORT, Feedback[feedback_pin].FEEDBACK_PIN);
+}
+
 void Feedback_Beep(uint16_t delayms)
 {
 	if (Feedback[BUZZER].FEEDBACK_ACTIVE == ACTIVE_HIGH)

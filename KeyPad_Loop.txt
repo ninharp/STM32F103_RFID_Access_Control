@@ -1,0 +1,86 @@
+/* Read keyboard data */
+		Keypad_Button = TM_KEYPAD_Read();
+
+		if (Keypad_Button != TM_KEYPAD_Button_NOPRESSED && ((millis() - timerDebounce) > 100)) {/* Keypad is pressed */
+			KeyFeedback();
+			switch (Keypad_Button) {
+				case TM_KEYPAD_Button_0:        /* Button 0 pressed */
+					printf("Button 0\r\n");
+					break;
+				case TM_KEYPAD_Button_1:        /* Button 1 pressed */
+					printf("Button 1\r\n");
+					break;
+				case TM_KEYPAD_Button_2:        /* Button 2 pressed */
+					printf("Button 2\r\n");
+					break;
+				case TM_KEYPAD_Button_3:        /* Button 3 pressed */
+					printf("Button 3\r\n");
+					break;
+				case TM_KEYPAD_Button_4:        /* Button 4 pressed */
+					printf("Button 4\r\n");
+					break;
+				case TM_KEYPAD_Button_5:        /* Button 5 pressed */
+					printf("Button 5\r\n");
+					break;
+				case TM_KEYPAD_Button_6:        /* Button 6 pressed */
+					printf("Button 6\r\n");
+					break;
+				case TM_KEYPAD_Button_7:        /* Button 7 pressed */
+					printf("Button 7\r\n");
+					break;
+				case TM_KEYPAD_Button_8:        /* Button 8 pressed */
+					printf("Button 8\r\n");
+					break;
+				case TM_KEYPAD_Button_9:        /* Button 9 pressed */
+					printf("Button 9\r\n");
+					break;
+				case TM_KEYPAD_Button_STAR:        /* Button STAR pressed */
+					printf("Button *\r\n");
+					break;
+				case TM_KEYPAD_Button_HASH:        /* Button HASH pressed */
+					printf("Button #\r\n");
+					break;
+				case TM_KEYPAD_Button_LEFT:        /* Button Left pressed */
+					printf("Button <\r\n");
+					break;
+				case TM_KEYPAD_Button_RIGHT:        /* Button Right pressed */
+					printf("Button >\r\n");
+					break;
+				case TM_KEYPAD_Button_UP:        /* Button Up pressed */
+					printf("Button /\\\r\n");
+					break;
+				case TM_KEYPAD_Button_DOWN:        /* Button Down pressed */
+					printf("Button \\/\r\n");
+					break;
+				case TM_KEYPAD_Button_F1:        /* Button F1 pressed */
+					printf("Button F1\r\n");
+					break;
+				case TM_KEYPAD_Button_F2:        /* Button F2 pressed */
+					printf("Button F2\r\n");
+					break;
+				case TM_KEYPAD_Button_ESC:        /* Button scape pressed */
+					printf("Button Escape\r\n");
+					break;
+				case TM_KEYPAD_Button_ENT:        /* Button Enter pressed */
+					printf("Button Enter\r\n");
+					break;
+				default:
+					break;
+			}
+			Keypad_Button = TM_KEYPAD_Button_NOPRESSED;
+			//DelayMS(250);
+			timerDebounce = millis();
+		}
+		
+		
+		/* Send to user */
+		//printf("Pressed: %u us\n", (uint8_t)Keypad_Button);
+
+		/*
+		TTP229_KEY key = TTP229_GetKey();
+		if (key != KEY_NONE) {
+			printf("%d\r\n", key+1);
+		}
+		DWT_Delay_ms(100); // Simplest Debouncing
+		*/
+		
